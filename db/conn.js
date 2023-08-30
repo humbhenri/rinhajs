@@ -1,8 +1,9 @@
+require("dotenv").config();
 const mongoose = require("mongoose")
 
 async function main() {
   try {
-    await mongoose.connect('mongodb://admin:password@127.0.0.1:27017/rinha');
+    await mongoose.connect(process.env.MONGODB_URI);
     console.log("connected to database")
   } 
   catch (error) {
