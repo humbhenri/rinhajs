@@ -12,23 +12,32 @@ app.use(express.json())
 app.use(bodyParser.urlencoded({ extended: false }))
 
 // parse application/json
-app.use(bodyParser.json())
+// app.use(bodyParser.json())
+app.use(bodyParser.text({
+  type: 'application/json'
+}))
 
 app.get("/", (req, res) => {
   res.send("hello")
 })
 
 app.post("/pessoas", async (req, res) => {
-  const pessoa = new Pessoa(req.body)
-  try {
-    await pessoa.save()
-  } catch (err) {
-    console.log(err.errors)
-    res.sendStatus(422)
+  const { nome } = req.body 
+  if (nome && typeof nome != 'string') {
+    res.status(400).json("requisição inválida")
     return
   }
-  res.location(`${req.protocol}://${req.get('host')}${req.originalUrl}/${pessoa._id}`)
-  res.sendStatus(201)
+  console.log("a criar pessoa")
+  try {
+    const pessoa = new Pessoa(req.body)
+    await pessoa.save()
+    res.location(`${req.protocol}://${req.get('host')}${req.originalUrl}/${pessoa._id}`)
+    res.status(201).json("pessoa criada")
+  } catch (err) {
+    console.log(err.errors)
+    res.status(422).json("requisição inválida")
+    return
+  }
 })
 
 app.get("/pessoas/:id", async (req, res) => {

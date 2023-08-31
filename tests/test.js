@@ -5,17 +5,16 @@ const uuid = require("uuid")
 
 require("dotenv").config();
 
-/* Connecting to the database before each test. */
-beforeEach(async () => {
-  await mongoose.connect(process.env.MONGODB_URI);
-});
-
-/* Closing database connection after each test. */
-afterEach(async () => {
-  await mongoose.connection.close();
-});
-
 describe("POST /pessoas", () => {
+
+  beforeEach(async () => {
+    await mongoose.connect(process.env.MONGODB_URI);
+  });
+
+  afterEach(async () => {
+    await mongoose.connection.close();
+  });
+
   const apelido = uuid.v4()
   it("cria pessoa", async () => {
     const res = await request(app).post("/pessoas").send({
