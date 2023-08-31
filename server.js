@@ -22,16 +22,23 @@ app.get("/", (req, res) => {
 })
 
 app.post("/pessoas", async (req, res) => {
-  const { nome } = req.body 
+  const { nome, stack } = req.body 
   if (nome && typeof nome != 'string') {
-    res.status(400).json("requisição inválida")
+    res.status(400).json("nome deve ser string")
     return
   }
-  console.log("a criar pessoa")
+  if (stack && !Array.isArray(stack)) {
+    res.status(400).json("stack deve ser array de strings")
+    return
+  }
+  if (stack && stack.filter(s => typeof s != 'string').length > 0) {
+    res.status(400).json("stack deve ser array de strings")
+    return
+  }
   try {
     const pessoa = new Pessoa(req.body)
     await pessoa.save()
-    res.location(`${req.protocol}://${req.get('host')}${req.originalUrl}/${pessoa._id}`)
+    res.location(`/pessoas/${pessoa._id}`)
     res.status(201).json("pessoa criada")
   } catch (err) {
     console.log(err.errors)
@@ -48,17 +55,28 @@ app.get("/pessoas/:id", async (req, res) => {
       res.status(404).json("pessoa nao encontrada")
       return
     }
-    res.json(pessoa)
+    res.json(pessoa.toDTO())
   } catch (err) {
     console.log(err)
     res.status(500).json("erro ao criar pessoa")
   }
 })
 
-app.get("/pessoas/t", (req, res) => {
+app.get("/pessoas", async (req, res) => {
+  const termo = req.query.t
+  if (!termo) {
+    res.status(400).json("termo de pesquisa é obrigatório")
+    return
+  }
+  const regex = new RegExp(termo, "i")
+  const results = await Pessoa.find({ $or: [{ nome: regex}, {apelido: regex}, {stack: regex}]}).exec()
+  const pessoas = results.map(p => p.toDTO())
+  res.status(200).json(pessoas)
 })
 
-app.get("/contagem-pessoas", (req, res) => {
+app.get("/contagem-pessoas", async (req, res) => {
+  const count = await Pessoa.count()
+  res.status(200).json(count)
 })
 
 module.exports = app
