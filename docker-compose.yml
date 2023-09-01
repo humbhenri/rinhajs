@@ -1,15 +1,50 @@
-version: '3.7'
-
+version: '3.5'
 services:
-    mongodb:
-        image: mongo:latest
-        container_name: mongodb
-        restart: always
-        environment:
-            MONGO_INITDB_ROOT_USERNAME: admin
-            MONGO_INITDB_ROOT_PASSWORD: password
-            MONGO_INITDB_DATABASE: rinha
-        ports:
-            - 27017:27017
-        volumes:
-            - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+  api1: &api
+    # image: api
+    build:
+      context: ./
+    environment:
+      - MONGODB_URI=mongodb://admin:password@db:27017/rinha
+    hostname: api1
+    depends_on:
+      - db
+    expose:
+      - "8080"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: '0.5GB'
+
+  api2:
+    <<: *api
+    hostname: api2
+
+  nginx: # Load Balancer
+    image: nginx:latest
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - api1
+      - api2
+    ports:
+      - "9999:9999"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: '0.5GB'
+
+  db:
+    image: mongo:latest
+    container_name: mongodb
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: rinha
+    ports:
+      - 27017:27017
+    volumes:
+      - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
