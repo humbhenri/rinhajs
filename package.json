@@ -20,6 +20,7 @@
     "mongoose": "^7.5.0",
     "mongoose-unique-validator": "^4.0.0",
     "nodemon": "^3.0.1",
+    "redis": "^4.6.8",
     "supertest": "^6.3.3",
     "uuid": "^9.0.0"
   }
