@@ -6,9 +6,11 @@ services:
       context: ./
     environment:
       - MONGODB_URI=mongodb://admin:password@db:27017/rinha
+      - REDIS_URI=redis://redis:6379
     hostname: api1
     depends_on:
       - db
+      - redis
     expose:
       - "8080"
     deploy:
