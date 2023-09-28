@@ -1,23 +1,74 @@
-const mongoose = require("mongoose")
-const uniqueValidator = require('mongoose-unique-validator')
-const uuid = require("uuid")
+const uuid = require("uuid");
+const { client } = require("../db/conn");
+const { ObjectId } = require("mongodb");
 
-const { Schema } = mongoose
+class Pessoa {
+  constructor(obj) {
+    // valida
+    if (obj) {
+      if (obj.apelido == null) {
+        throw new Error("apelido obrigatório");
+      }
+      if (obj.apelido.length > 32) {
+        throw new Error("apelido maior que tamanho máximo");
+      }
+      if (obj.nome == null) {
+        throw new Error("nome obrigatório");
+      }
+      if (obj.nome.length > 32) {
+        throw new Error("nome maior que tamanho máximo");
+      }
+      if (obj.nascimento == null) {
+        throw new Error("nascimento obrigatório");
+      }
+      if (!new RegExp(/\d{4}-\d{2}-\d{2}/).test(obj.nascimento)) {
+        throw new Error("nascimento com formato inválido");
+      }
+    }
 
-const pessoaSchema = new Schema({
-  _id: {type: String, default: uuid.v4},
-  apelido: {type: String, required: true, unique: true},
-  nome: {type: String, required: true},
-  nascimento: String,
-  stack: [String],
-})
-pessoaSchema.plugin(uniqueValidator)
+    this.obj = obj;
+    let text = "";
+    if (obj?.apelido) {
+      text += obj.apelido;
+    }
+    if (obj?.nome) {
+      text += obj.nome;
+    }
+    if (obj?.stack) {
+      if (obj.stack.filter((el) => el.length > 32).length) {
+        throw new Error("elemento stack maior que tamanho máximo");
+      }
+      text += obj.stack.join("");
+    }
+    if (this.obj) {
+      this.obj.text = text;
+    }
+  }
 
-pessoaSchema.methods.toDTO = function () {
-  const { _id:id, apelido, nome, nascimento, stack} = this
-  return { id, apelido, nome, nascimento, stack}
+  get pessoas() {
+    const db = client.db("rinha");
+    const coll = db.collection("pessoas");
+    return coll;
+  }
+
+  async save() {
+    const result = await this.pessoas.insertOne(this.obj);
+    return result.insertedId;
+  }
+
+  async findById(id) {
+    return this.pessoas.findOne({ _id: new ObjectId(id) });
+  }
+
+  async find(termo) {
+    return this.pessoas
+      .find({ text: { $regex: termo, $options: "i" } })
+      .toArray();
+  }
+
+  async count() {
+    return this.pessoas.countDocuments();
+  }
 }
 
-const Pessoa = mongoose.model("Pessoa", pessoaSchema)
-
-module.exports = Pessoa
+module.exports = Pessoa;
