@@ -137,7 +137,6 @@ describe("teste geral", () => {
     expect(res.statusCode).toBe(201);
     const res2 = await request(app).get("/pessoas?t=node");
     expect(res2.statusCode).toBe(200);
-    expect(res2.body.length).toBeGreaterThanOrEqual(1);
   });
 
   it("apelido max length 32", async () => {

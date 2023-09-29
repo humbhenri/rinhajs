@@ -26,6 +26,7 @@ class Pessoa {
       }
     }
 
+    // cria campo do tipo texto para pesquisa mais rápida
     this.obj = obj;
     let text = "";
     if (obj?.apelido) {
@@ -38,7 +39,7 @@ class Pessoa {
       if (obj.stack.filter((el) => el.length > 32).length) {
         throw new Error("elemento stack maior que tamanho máximo");
       }
-      text += obj.stack.join("");
+      text += obj.stack.map((s) => s.toLowerCase()).join("");
     }
     if (this.obj) {
       this.obj.text = text;
@@ -62,7 +63,7 @@ class Pessoa {
 
   async find(termo) {
     return this.pessoas
-      .find({ text: { $regex: termo, $options: "i" } })
+      .find({ text: { $regex: termo.toLowerCase() } })
       .toArray();
   }
 
